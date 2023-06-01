@@ -1,0 +1,197 @@
+{% extends "layout.html" %}
+
+{% block content%}
+<script>
+<!--Runs after HTML loads-->
+$(document).ready(function() {
+    $('#type_dropdown').dropdown({
+        onChange: function(value, text, $selectedItem) {
+          $('#type_dropdown input[name="contract_type"]').val(value);
+        }
+    });
+
+    // Set the selected value for the dropdown based on the contract_type variable
+    var selectedType = "{{ contract_type or 'Puts' }}";
+    $('#type_dropdown').dropdown('set selected', selectedType);
+
+    var expiration_dates = {{ expiration_dates|tojson }};
+
+    var dropdownOptions = [];
+
+    // Iterate over the expiration dates array and create options with name and value
+    expiration_dates.forEach(function(date, index) {
+    dropdownOptions.push({
+      name: date,
+      value: index.toString()
+    });
+    });
+
+    // Set the dropdown options using the dropdown function
+    $('#date-dropdown').dropdown({
+    values: dropdownOptions
+    });
+
+    $('.date.menu .item').on('click', function() {
+      var selectedValue = $(this).data('value');
+      var selectedText = $(this).text();
+      $('.default.date').text(selectedText);
+      $('#date-dropdown input[name="exp_date"]').val(selectedValue);
+    });
+
+
+    $('#add_stocks').click(function() {
+        $('.ui.modal').modal('show');
+    })
+
+    $('#delete_all').click(function() {
+        // Ask for confirmation using a dialog box
+        var confirmed = window.confirm("Are you sure you want to delete all records?");
+
+        if (confirmed) {
+          // Send an AJAX request to delete all records
+          $.ajax({
+            url: '/delete_all',
+            type: 'POST',
+            dataType: 'json',
+            success: function(response) {
+              // Handle the response from the server
+              if (response.code === 'success') {
+                // Reload or update the page to reflect the changes
+                location.reload();
+              } else {
+                // Display an error message or handle the failure case
+                console.error("Failed to delete all records.");
+              }
+            },
+            error: function(xhr, status, error) {
+              // Handle the AJAX request error
+              console.error("AJAX request failed:", error);
+            }
+          });
+        }
+    });
+
+    $('#save').click(function() {
+
+        var symbols = $('#symbols').val();
+
+        var date = $('#expirationDatesDropdown').val();
+
+        console.log(date);
+
+        var stock_symbols = symbols.split("\n");
+
+        for (var i = 0; i < stock_symbols.length; ++i){
+            console.log(stock_symbols[i]);
+
+            $.ajax({
+                url: '/stock',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({'symbol': stock_symbols[i], 'date': date}),
+                dataType: 'json'
+            })
+        }
+
+        $('.ui.modal').modal('hide');
+    })
+});</script>
+<form>
+    <div class="ui input">
+      <input name="ticker_name" type="text" placeholder="Stock Symbol" value="{{ ticker_name or ''}}">
+    </div>
+
+   <div class="ui selection date dropdown" id="date-dropdown">
+      <input name="exp_date" type="hidden" placeholder="Expiration Date" value="{{ exp_date or ''}}">
+      <i class="dropdown icon"></i>
+      <div class="default date">{{ exp_date or 'Expiration Date' }}</div>
+      <div class="date menu">
+        {% for expiration_date in expiration_dates %}
+          <div class="item {% if exp_date == loop.index0 %}active{% endif %}" data-value="{{ loop.index0 }}">{{ expiration_date }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="ui selection dropdown" id="type_dropdown">
+      <input name="contract_type" type="hidden" placeholder="Type" value="{{ contract_type or ''}}">
+      <i class="dropdown icon"></i>
+      <div class="default text">{{ contract_type_label }}</div>
+      <div class="menu">
+        <div class="item {% if contract_type == 'Puts' %}active{% endif %}" data-value="Puts">Puts</div>
+        <div class="item {% if contract_type == 'Calls' %}active{% endif %}" data-value="Calls">Calls</div>
+      </div>
+    </div>
+
+    <div class="ui checkbox">
+      <input name="in_the_money" type="checkbox" id="in_the_money" {% if in_the_money %}checked{% endif %}>
+      <label>In the Money?</label>
+    </div>
+
+    <button type='submit' class="ui button primary">
+      Filter
+    </button>
+</form>
+
+<div>
+    <button id="add_stocks" class="ui button">Add Stocks</button>
+    <button id="delete_all" class="ui button negative">Delete All</button>
+</div>
+
+<table class="ui celled table">
+  <thead>
+    <tr>
+        <th>Symbol</th>
+        <th>Current Price</th>
+        <th>Expiration Date</th>
+        <th>Type</th>
+        <th>Strike</th>
+        <th>Premium</th>
+        <th>Open Interest</th>
+        <th>Implied Volatility</th>
+    </tr>
+  </thead>
+  <tbody>
+        {% for option in options %}
+    <tr>
+        <td>{{option.symbol}}</td>
+        <td>{{option.current_price}}</td>
+        <td>{{option.exp_date}}</td>
+        <td>{{option.type}}</td>
+        <td>{{option.strike}}</td>
+        <td>{{option.premium}}</td>
+        <td>{{option.open_interest}}</td>
+        <td>{{option.implied_volatility}}</td>
+    </tr>
+        {% endfor %}
+  </tbody>
+</table>
+
+<div class="ui modal">
+  <i class="close icon"></i>
+  <div class="header">
+    Add Stock Symbol
+  </div>
+  <div class="content">
+    <div class="ui form">
+      <div class="field">
+        <label>Enter Stock Symbols</label>
+        <textarea id="symbols"></textarea>
+      </div>
+      <div class="field">
+        <label>Expiration Date</label>
+        <select id="expirationDatesDropdown">
+            {% for expiration_date in expiration_dates %}
+            <option value="{{ expiration_date }}">{{ expiration_date }}</option>
+            {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="actions">
+    <div id="save" class="ui positive right labeled icon button">
+      Add Symbols
+      <i class="plus icon"></i>
+    </div>
+  </div>
+</div>
+{% endblock %}

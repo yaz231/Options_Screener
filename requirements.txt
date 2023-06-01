@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+jinja2
+yfinance
+sqlalchemy
+yahoo_fin
+requests
+bs4
+pandas
