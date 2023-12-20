@@ -138,9 +138,6 @@ def insert_into_df(df, index, column_name, value):
     return final_df
 
 
-user = 'yazan_alatrach@hotmail.com'
-pwd = 'Leblancisso0P!23111'
-
 pd.set_option('display.max_columns', None)
 
 # print(rs.login(user, pwd)['detail'])

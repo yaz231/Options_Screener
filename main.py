@@ -29,6 +29,7 @@ def get_db():
     finally:
         db.close()
 
+
 @app.get("/")
 def home(request: Request, ticker_name = None, exp_date = None, contract_type = None, in_the_money = None, db: Session = Depends(get_db)):
     """
