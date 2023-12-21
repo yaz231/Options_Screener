@@ -95,46 +95,79 @@ $(document).ready(function() {
 
         $('.ui.modal').modal('hide');
     })
+
+    $('#stock_chart').click(function() {
+        console.log("STOCK CHART")
+        window.location.href = '/stock_chart';
+    })
+
+    $('#toggleDarkMode').click(function() {
+        toggleDarkMode();
+    });
+
+    var darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+    if (darkModeEnabled) {
+        enableDarkMode();
+    }
+
+    function toggleDarkMode() {
+        console.log("Toggle Dark Mode clicked");
+        var darkModeEnabled = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', darkModeEnabled);
+    }
+
+    function enableDarkMode() {
+        document.body.classList.add('dark-mode');
+    }
+
+    function disableDarkMode() {
+        document.body.classList.remove('dark-mode');
+    }
+
 });</script>
 <form>
-    <div class="ui input">
-      <input name="ticker_name" type="text" placeholder="Stock Symbol" value="{{ ticker_name or ''}}">
-    </div>
+    <div class="container">
+        <div class="ui input">
+          <input name="ticker_name" type="text" placeholder="Stock Symbol" value="{{ ticker_name or ''}}">
+        </div>
 
-   <div class="ui selection date dropdown" id="date-dropdown">
-      <input name="exp_date" type="hidden" placeholder="Expiration Date" value="{{ exp_date or ''}}">
-      <i class="dropdown icon"></i>
-      <div class="default date">{{ exp_date or 'Expiration Date' }}</div>
-      <div class="date menu">
-        {% for expiration_date in expiration_dates %}
-          <div class="item {% if exp_date == loop.index0 %}active{% endif %}" data-value="{{ loop.index0 }}">{{ expiration_date }}</div>
-        {% endfor %}
-      </div>
-    </div>
+       <div class="ui selection date dropdown" id="date-dropdown">
+          <input name="exp_date" type="hidden" placeholder="Expiration Date" value="{{ exp_date or ''}}">
+          <i class="dropdown icon"></i>
+          <div class="default date">{{ exp_date or 'Expiration Date' }}</div>
+          <div class="date menu">
+            {% for expiration_date in expiration_dates %}
+              <div class="item {% if exp_date == loop.index0 %}active{% endif %}" data-value="{{ loop.index0 }}">{{ expiration_date }}</div>
+            {% endfor %}
+          </div>
+        </div>
 
-    <div class="ui selection dropdown" id="type_dropdown">
-      <input name="contract_type" type="hidden" placeholder="Type" value="{{ contract_type or ''}}">
-      <i class="dropdown icon"></i>
-      <div class="default text">{{ contract_type_label }}</div>
-      <div class="menu">
-        <div class="item {% if contract_type == 'Puts' %}active{% endif %}" data-value="Puts">Puts</div>
-        <div class="item {% if contract_type == 'Calls' %}active{% endif %}" data-value="Calls">Calls</div>
-      </div>
-    </div>
+        <div class="ui selection dropdown" id="type_dropdown">
+          <input name="contract_type" type="hidden" placeholder="Type" value="{{ contract_type or ''}}">
+          <i class="dropdown icon"></i>
+          <div class="default text">{{ contract_type_label }}</div>
+          <div class="menu">
+            <div class="item {% if contract_type == 'Puts' %}active{% endif %}" data-value="Puts">Puts</div>
+            <div class="item {% if contract_type == 'Calls' %}active{% endif %}" data-value="Calls">Calls</div>
+          </div>
+        </div>
 
-    <div class="ui checkbox">
-      <input name="in_the_money" type="checkbox" id="in_the_money" {% if in_the_money %}checked{% endif %}>
-      <label>In the Money?</label>
-    </div>
+        <div class="ui checkbox">
+          <input name="in_the_money" type="checkbox" id="in_the_money" {% if in_the_money %}checked{% endif %}>
+          <label>In the Money?</label>
+        </div>
 
-    <button type='submit' class="ui button primary">
-      Filter
-    </button>
+        <button type='submit' class="ui button primary">
+          Filter
+        </button>
+    </div>
 </form>
 
-<div>
+<div class="button-container">
     <button id="add_stocks" class="ui button">Add Stocks</button>
     <button id="delete_all" class="ui button negative">Delete All</button>
+    <button id="stock_chart" class="ui button">View Stock Charts</button>
+    <button id="toggleDarkMode" class="ui button right">Toggle Dark Mode</button>
 </div>
 
 <table class="ui celled table">

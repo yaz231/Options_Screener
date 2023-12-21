@@ -1,7 +1,9 @@
 import models
 from yahoo_fin import options as op, stock_info as si
+import plotly.graph_objs as go
 import re
 import pandas as pd
+from typing import List
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, Depends, BackgroundTasks
 from fastapi.templating import Jinja2Templates
@@ -9,6 +11,7 @@ from database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from models import Option
+import json
 
 app = FastAPI()
 
@@ -40,12 +43,12 @@ def home(request: Request, ticker_name = None, exp_date = None, contract_type = 
     expiration_dates = get_expiration_dates()
 
     if ticker_name:
-        print(f"Ticker Name: {ticker_name}")
+        # print(f"Ticker Name: {ticker_name}")
         options = options.filter(Option.symbol == ticker_name)
 
         if in_the_money:  # Added filter for in the money options
             in_the_money = bool(in_the_money)
-            print(f"In the Money: {in_the_money}")
+            # print(f"In the Money: {in_the_money}")
             current_price = si.get_live_price(ticker_name).round(2)
             if contract_type == 'Puts':
                 options = options.filter(Option.strike > current_price)
@@ -56,13 +59,13 @@ def home(request: Request, ticker_name = None, exp_date = None, contract_type = 
     if exp_date:
         if len(exp_date) > 1:
             exp_date = expiration_dates.index(exp_date)
-        print(f"Expiration Date: {expiration_dates[int(exp_date)]}")
+        # print(f"Expiration Date: {expiration_dates[int(exp_date)]}")
         date_object = datetime.strptime(expiration_dates[int(exp_date)], "%B %d, %Y")
         converted_date = date_object.strftime("%Y-%m-%d")
         options = options.filter(Option.exp_date == converted_date)
 
     if contract_type:
-        print(f"Contract Type: {contract_type}")
+        # print(f"Contract Type: {contract_type}")
         if contract_type == 'Puts':
             options = options.filter(Option.type == "Put")
         else:
@@ -182,3 +185,46 @@ def delete_all_records(db: Session = Depends(get_db)):
     # Handle the deletion failure case
     db.rollback()
     return {"code": "error", "message": str(e)}
+
+def get_start_date():
+    current_date = datetime.now().date()
+    return current_date - timedelta(days=365)
+
+def create_stock_chart(data, symbol, timeframe):
+    fig = go.Figure(data=[go.Candlestick(x=data.index,
+                                          open=data['open'],
+                                          high=data['high'],
+                                          low=data['low'],
+                                          close=data['close'])])
+    fig.update_layout(
+        title=f'{symbol} Stock Chart - {timeframe}',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False
+    )
+    return fig
+
+def process_stock_data(raw_data):
+    processed_data = {
+        'labels': [timestamp.strftime('%Y-%m-%d %H:%M:%S') for timestamp in raw_data.index],
+        'values': raw_data['close'].tolist()
+    }
+    return processed_data
+
+# Function to fetch unique symbols from the database
+def get_unique_symbols(db: Session = Depends(get_db)) -> List[str]:
+    unique_symbols = db.query(Option.symbol).distinct().all()
+    return [symbol[0] for symbol in unique_symbols]
+@app.get("/stock_chart")
+def stock_chart(request: Request, db: Session = Depends(get_db)):
+    symbols = get_unique_symbols(db)
+    chart_data = {}
+
+    for symbol in symbols:
+        stock_data = si.get_data(symbol, start_date=get_start_date())
+        chart_data[symbol] = process_stock_data(stock_data)
+
+    return templates.TemplateResponse("stock_chart.html", {
+        "request": request,
+        "chart_data": chart_data
+    })

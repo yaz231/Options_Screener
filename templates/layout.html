@@ -6,6 +6,72 @@
                 font-weight: bold;
                 color: green;
             }
+            .container {
+                display: flex;
+                margin-bottom: 20px;
+                justify-content: flex-start;
+            }
+            .button-container {
+                display: flex;
+                margin-bottom: 20px;
+                justify-content: flex-start;
+            }
+            .right {
+                position: absolute;
+                right: 10px;
+            }
+            .dark-mode {
+                /* Define styles for dark mode */
+                background-color: #1f1f1f; /* Change the background color to dark */
+                color: white; /* Set text color to light */
+                /* ... other styles ... */
+            }
+
+            .dark-mode .ui.input input[type="text"] {
+                background-color: #333; /* Change input background color in dark mode */
+                color: #fff; /* Set input text color to light in dark mode */
+                /* Add any other styles you want for the input field in dark mode */
+            }
+
+            .dark-mode .ui.button {
+                background-color: #333; /* Change button background color in dark mode */
+                color: #fff; /* Set button text color to light in dark mode */
+                /* Add any other styles you want for buttons in dark mode */
+            }
+
+            /* Dark mode styles for table cells */
+            .dark-mode .ui.celled.table td {
+                background-color: #222; /* Change table cell background color in dark mode */
+                color: #fff; /* Set table cell text color to light in dark mode */
+                /* Add any other styles you want for table cells in dark mode */
+            }
+
+            /* Dark mode styles for selection dropdown */
+            .dark-mode .ui.selection.dropdown {
+                background-color: #333; /* Change dropdown background color in dark mode */
+                color: #fff; /* Set dropdown text color to light in dark mode */
+                /* Add any other styles you want for the dropdown in dark mode */
+            }
+
+            /* Dark mode styles for dropdown menu items */
+            .dark-mode .ui.selection.dropdown .menu .item {
+                background-color: #222; /* Change dropdown menu item background color in dark mode */
+                color: #fff; /* Set dropdown menu item text color to light in dark mode */
+                /* Add any other styles you want for the dropdown menu items in dark mode */
+            }
+
+            /* Dark mode styles for checkbox */
+            .dark-mode .ui.checkbox input:checked~label:before {
+                border-color: #fff; /* Change checkbox color in dark mode */
+                background-color: #fff; /* Change checkbox background color in dark mode */
+                /* Add any other styles you want for the checkbox in dark mode */
+            }
+
+            /* Dark mode styles for checkbox label */
+            .dark-mode .ui.checkbox label {
+                color: #fff; /* Set checkbox label text color to light in dark mode */
+                /* Add any other styles you want for the checkbox label in dark mode */
+            }
         </style>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
         <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
