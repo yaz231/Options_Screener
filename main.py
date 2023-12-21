@@ -1,3 +1,4 @@
+import uvicorn
 import models
 from yahoo_fin import options as op, stock_info as si
 import plotly.graph_objs as go
