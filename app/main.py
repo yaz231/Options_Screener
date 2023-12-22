@@ -1,4 +1,11 @@
-import uvicorn
+import os
+import sys
+
+# Get the current directory of this file
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+sys.path.append(current_dir)
+
 import models
 from yahoo_fin import options as op, stock_info as si
 import plotly.graph_objs as go
