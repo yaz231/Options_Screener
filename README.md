@@ -17,7 +17,7 @@ Disclaimer: This project is mostly used to explore different concepts when devel
 
     ```bash
     python -m venv env
-    source env/bin/activate  # For Unix/Linux
+    source venv/bin/activate  # For Unix/Linux
     .\env\Scripts\activate   # For Windows
     ```
 
