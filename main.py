@@ -12,7 +12,6 @@ from database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from models import Option
-import json
 
 app = FastAPI()
 
