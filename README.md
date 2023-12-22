@@ -37,7 +37,7 @@ uvicorn main:app --reload
 ## Using the Project
 ### Options Screener
 The first screen allows you to add company tickers to a local database that shows you the Stock Ticker, the Current Price, the Expiration Date, the Type of Contract (Calls or Puts), the Strike Price, the Premium, the Open Interest, and the Implied Volatility.
-You also have the ability to filter the database based on what contracts you might be searching for!
+You also have the ability to filter the database based on what contracts you might be searching for! After Adding Stocks or Filtering, please refresh the page to see the updated table.
 
 ### Stock Chart
 Clicking on the Stock Chart will navigate you to the Stock Chart page. This page will show all the stocks added to your database in the same graph. Additionally, on the right side, you'll be able to see the percentage change for each stock for the given time period.

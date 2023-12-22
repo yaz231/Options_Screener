@@ -5,10 +5,10 @@ FROM python:3.9
 WORKDIR /app
 
 # Copy the requirements.txt file into the container
-COPY requirements.txt .
+COPY ./requirements.txt /app/requirements.txt
 
 # Install project dependencies
-RUN pip install -r requirements.txt
+RUN pip install -r /app/requirements.txt
 
 # Copy the entire project directory into the container
 COPY . .

@@ -215,6 +215,7 @@ def process_stock_data(raw_data):
 def get_unique_symbols(db: Session = Depends(get_db)) -> List[str]:
     unique_symbols = db.query(Option.symbol).distinct().all()
     return [symbol[0] for symbol in unique_symbols]
+
 @app.get("/stock_chart")
 def stock_chart(request: Request, db: Session = Depends(get_db)):
     symbols = get_unique_symbols(db)
@@ -228,3 +229,19 @@ def stock_chart(request: Request, db: Session = Depends(get_db)):
         "request": request,
         "chart_data": chart_data
     })
+
+@app.on_event("startup")
+async def startup_event():
+    # Clear the database on app startup
+    clear_database()
+
+def clear_database():
+    db = SessionLocal()
+    try:
+        db.query(Option).delete()
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()

@@ -20,10 +20,10 @@ $(document).ready(function() {
 
     // Iterate over the expiration dates array and create options with name and value
     expiration_dates.forEach(function(date, index) {
-    dropdownOptions.push({
-      name: date,
-      value: index.toString()
-    });
+        dropdownOptions.push({
+            name: date,
+            value: index.toString()
+        });
     });
 
     // Set the dropdown options using the dropdown function
@@ -72,13 +72,8 @@ $(document).ready(function() {
     });
 
     $('#save').click(function() {
-
         var symbols = $('#symbols').val();
-
         var date = $('#expirationDatesDropdown').val();
-
-        console.log(date);
-
         var stock_symbols = symbols.split("\n");
 
         for (var i = 0; i < stock_symbols.length; ++i){
@@ -92,9 +87,13 @@ $(document).ready(function() {
                 dataType: 'json'
             })
         }
-
         $('.ui.modal').modal('hide');
-    })
+    });
+
+    // Function to broadcast a message to the server when a stock is added
+    async function broadcast(message) {
+        await socket.send(message);
+    }
 
     $('#stock_chart').click(function() {
         console.log("STOCK CHART")
@@ -170,7 +169,7 @@ $(document).ready(function() {
     <button id="toggleDarkMode" class="ui button right">Toggle Dark Mode</button>
 </div>
 
-<table class="ui celled table">
+<table id="stockTable" class="ui celled table">
   <thead>
     <tr>
         <th>Symbol</th>
