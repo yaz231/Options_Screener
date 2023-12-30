@@ -78,8 +78,9 @@ def home(request: Request, ticker_name = None, exp_date = None, contract_type = 
     # Access session-specific data from the sessions dictionary
     session_data = sessions.get(session_id, {})
 
-    options = db.query(Option)
     expiration_dates = get_expiration_dates()
+
+    options = db.query(Option).filter(Option.session_id == session_id)
 
     if ticker_name:
         # print(f"Ticker Name: {ticker_name}")
@@ -93,7 +94,6 @@ def home(request: Request, ticker_name = None, exp_date = None, contract_type = 
                 options = options.filter(Option.strike > current_price)
             else:
                 options = options.filter(Option.strike < current_price)
-
 
     if exp_date:
         if len(exp_date) > 1:
@@ -119,10 +119,11 @@ def home(request: Request, ticker_name = None, exp_date = None, contract_type = 
     #         options = options.filter(Option.strike < current_price)
 
     # print(exp_dates)
+
+    options = options.all()
+
     return templates.TemplateResponse("home.html", context={
         "request": request,
-        "session_id": session_id,
-        "session_data": session_data,
         "options": options,
         "expiration_dates": expiration_dates,
         "ticker_name": ticker_name,
@@ -149,7 +150,7 @@ def reformat_df(df, puts = True):
     df = df.drop(columns=["Contract Name", "Last Trade Date"])
     return df
 
-def fetch_option_data(ticker: str, date: str, db: Session):
+def fetch_option_data(ticker: str, date: str, db: Session, session_id: str):
     date_object = datetime.strptime(date, "%B %d, %Y")
     expiration_date = date_object.strftime("%Y-%m-%d")
 
@@ -191,7 +192,8 @@ def fetch_option_data(ticker: str, date: str, db: Session):
                 type=row['Type'],
                 premium=row['Last Price'],
                 open_interest=row['Open Interest'],
-                implied_volatility=row['Implied Volatility']
+                implied_volatility=row['Implied Volatility'],
+                session_id=session_id
             )
             db.add(option)
 
@@ -200,13 +202,14 @@ def fetch_option_data(ticker: str, date: str, db: Session):
 
 
 @app.post("/stock")
-async def create_stock(stock_request: StockRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def create_stock(stock_request: StockRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), request: Request = None):
     """
     Created a stock and stores it in the database
     :return:
     """
+    session_id = request.state.session_id if request else None
 
-    background_tasks.add_task(fetch_option_data, stock_request.symbol, stock_request.date, db)
+    background_tasks.add_task(fetch_option_data, stock_request.symbol, stock_request.date, db, session_id)
 
     return {"code": "success",
             "message": "Stock Ticker was added to the database"

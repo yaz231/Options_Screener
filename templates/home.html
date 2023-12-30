@@ -79,13 +79,29 @@ $(document).ready(function() {
         for (var i = 0; i < stock_symbols.length; ++i){
             console.log(stock_symbols[i]);
 
-            $.ajax({
-                url: '/stock',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({'symbol': stock_symbols[i], 'date': date}),
-                dataType: 'json'
+            // Fetch API to send the POST request
+            fetch('/stock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({'symbol': stock_symbols[i], 'date': date}),
+                credentials: 'same-origin' // Include credentials in the request
             })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Handle successful response here if needed
+                console.log(data);
+            })
+            .catch(error => {
+                // Handle error here
+                console.error('There has been a problem with your fetch operation:', error);
+            });
         }
         $('.ui.modal').modal('hide');
     });

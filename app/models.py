@@ -5,6 +5,7 @@ class Option(Base):
     __tablename__ = "options"
 
     id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, index=True)
     symbol = Column(String, unique=False, index=True)
     current_price = Column(Numeric(10, 2))
     exp_date = Column(Date)
