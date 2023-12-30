@@ -22,7 +22,7 @@ COPY ./app /code/app
 COPY ./templates /code/templates
 
 # Expose the port your application runs on (replace 8000 with your application's port)
-EXPOSE 80
+EXPOSE 8000
 
 # Command to run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
