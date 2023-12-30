@@ -252,14 +252,13 @@ def process_stock_data(raw_data):
     }
     return processed_data
 
-# Function to fetch unique symbols from the database
-def get_unique_symbols(db: Session = Depends(get_db)) -> List[str]:
-    unique_symbols = db.query(Option.symbol).distinct().all()
-    return [symbol[0] for symbol in unique_symbols]
-
 @app.get("/stock_chart")
 def stock_chart(request: Request, db: Session = Depends(get_db)):
-    symbols = get_unique_symbols(db)
+    session_id = request.state.session_id
+
+    symbols = db.query(Option.symbol).filter(Option.session_id == session_id).distinct().all()
+    symbols = [symbol[0] for symbol in symbols]
+
     chart_data = {}
 
     for symbol in symbols:
