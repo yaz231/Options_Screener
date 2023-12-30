@@ -75,9 +75,6 @@ def home(request: Request, ticker_name = None, exp_date = None, contract_type = 
     # Access session ID from the request state
     session_id = request.state.session_id
 
-    # Access session-specific data from the sessions dictionary
-    session_data = sessions.get(session_id, {})
-
     expiration_dates = get_expiration_dates()
 
     options = db.query(Option).filter(Option.session_id == session_id)
