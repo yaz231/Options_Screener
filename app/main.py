@@ -13,12 +13,13 @@ import re
 import pandas as pd
 from typing import List
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Request, Depends, BackgroundTasks
+from fastapi import FastAPI, Request, Depends, BackgroundTasks, Response
 from fastapi.templating import Jinja2Templates
 from database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from models import Option
+from uuid import uuid4
 
 
 templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'templates')
@@ -29,6 +30,7 @@ app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
 database = {}
+sessions = {}
 
 templates = Jinja2Templates(directory="templates")
 
@@ -43,6 +45,26 @@ def get_db():
     finally:
         db.close()
 
+# Middleware to manage session IDs
+@app.middleware("http")
+async def add_session_id(request: Request, call_next):
+    # Check if the request has a session cookie
+    session_id = request.cookies.get("session_id")
+
+    if session_id not in sessions:
+        # If session ID doesn't exist, create a new one
+        session_id = str(uuid4())
+        sessions[session_id] = {}  # Create an empty session data dictionary
+
+    # Add session ID to the request state for easy access
+    request.state.session_id = session_id
+
+    response = await call_next(request)
+
+    # Set the session ID cookie in the response
+    response.set_cookie(key="session_id", value=session_id)
+
+    return response
 
 @app.get("/")
 def home(request: Request, ticker_name = None, exp_date = None, contract_type = None, in_the_money = None, db: Session = Depends(get_db)):
@@ -50,6 +72,12 @@ def home(request: Request, ticker_name = None, exp_date = None, contract_type = 
     displays the stock screener dashboard / homepage
     :return:
     """
+    # Access session ID from the request state
+    session_id = request.state.session_id
+
+    # Access session-specific data from the sessions dictionary
+    session_data = sessions.get(session_id, {})
+
     options = db.query(Option)
     expiration_dates = get_expiration_dates()
 
@@ -93,6 +121,8 @@ def home(request: Request, ticker_name = None, exp_date = None, contract_type = 
     # print(exp_dates)
     return templates.TemplateResponse("home.html", context={
         "request": request,
+        "sesion_id": session_id,
+        "session_data": session_data,
         "options": options,
         "expiration_dates": expiration_dates,
         "ticker_name": ticker_name,
