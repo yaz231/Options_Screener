@@ -20,6 +20,10 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from models import Option
 
+
+templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'templates')
+templates = Jinja2Templates(directory=templates_dir)
+
 app = FastAPI()
 
 models.Base.metadata.create_all(bind=engine)
