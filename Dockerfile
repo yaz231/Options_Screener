@@ -1,6 +1,11 @@
 # Use the official Python base image
 FROM python:3.9-slim
 
+# Install required system dependencies
+RUN apt-get update \
+    && apt-get install -y libxml2-dev libxslt-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set the working directory in the container
 WORKDIR /code
 
