@@ -56,7 +56,7 @@ docker run -d --name mycontainer -p 80:80 options_screener_image
 ```
 
 Here we are creating a container for our image and naming our container "mycontainer"
-Because we have specified in our Dockerfile that we are using the ip: "0.0.0.0", we an navigate to http://localhost.com:80 and we can then navigate to a local instance of the project.
+Because we have specified in our Dockerfile that we are using the ip: "0.0.0.0", we an navigate to http://localhost:80 and we can then navigate to a local instance of the project.
 ## Using the Project
 ### Options Screener
 The first screen allows you to add company tickers to a local database that shows you the Stock Ticker, the Current Price, the Expiration Date, the Type of Contract (Calls or Puts), the Strike Price, the Premium, the Open Interest, and the Implied Volatility.
