@@ -121,7 +121,7 @@ def home(request: Request, ticker_name = None, exp_date = None, contract_type = 
     # print(exp_dates)
     return templates.TemplateResponse("home.html", context={
         "request": request,
-        "sesion_id": session_id,
+        "session_id": session_id,
         "session_data": session_data,
         "options": options,
         "expiration_dates": expiration_dates,
