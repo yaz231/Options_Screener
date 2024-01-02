@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multi-leg Option Contract Graph</title>
+    <!-- Include Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Multi-leg Option Contract Graph</h1>
+
+    <!-- Form to select contract parameters -->
+    <form id="optionForm">
+        <label for="symbol">Select Symbol:</label>
+        <select id="symbol">
+            <!-- Populate symbols dynamically based on available options -->
+            {% for symbol in unique_symbols %}
+                <option value="{{ symbol }}">{{ symbol }}</option>
+            {% endfor %}
+        </select>
+        <label for="expirationDate">Select Expiration Date:</label>
+        <select id="expirationDate">
+            {% for expiration_date in expiration_dates %}
+            <option value="{{ expiration_date }}">{{ expiration_date }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="leg1Type">Select First Leg:</label>
+        <select id="leg1Type">
+            <option value="Put">Buy Put</option>
+            <option value="Call">Buy Call</option>
+            <!-- Add other options for the first leg -->
+        </select>
+
+        <label for="leg2Type">Select Second Leg:</label>
+        <select id="leg2Type">
+            <option value="Put">Buy Put</option>
+            <option value="Call">Buy Call</option>
+            <!-- Add other options for the second leg -->
+        </select>
+
+        <!-- Add more legs if needed -->
+
+        <button type="button" onclick="generateChart()">Generate Chart</button>
+        <button type="button" onclick="goToOptions()">Back To Options Table</button>
+    </form>
+
+    <!-- Canvas to display the Chart -->
+    <div style="width: 80%;">
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <script>
+        // Function to generate the Chart
+        function generateChart() {
+            // Fetch selected parameters
+            const expirationDate = document.getElementById('expirationDate').value;
+            const leg1Type = document.getElementById('leg1Type').value;
+            const leg2Type = document.getElementById('leg2Type').value;
+            // Get Chart canvas context
+            const ctx = document.getElementById('myChart').getContext('2d');
+
+            // Generate data for the Chart (example)
+            const chartData = {
+                labels: ["Price 1", "Price 2", "Price 3"], // Add appropriate labels for price points
+                datasets: [{
+                    label: 'Leg 1',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    data: [50, 60, 70], // Replace with your calculated data for leg 1
+                }, {
+                    label: 'Leg 2',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    data: [70, 60, 50], // Replace with your calculated data for leg 2
+                }]
+            };
+
+            // Chart.js configuration
+            const chartOptions = {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Price'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Profit/Loss'
+                        }
+                    }
+                }
+            };
+
+            // Create the Chart using Chart.js
+            const myChart = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: chartOptions
+            });
+        }
+        function goToOptions() {
+            console.log("OPTIONS PAGE")
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

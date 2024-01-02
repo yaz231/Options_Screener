@@ -1,0 +1,34 @@
+name: Docker Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build and tag Docker image
+        run: |
+          docker build -t options_screener_image:latest --platform linux/amd64 .
+          docker tag options_screener_image:latest yaz231/options_screener_image:latest
+
+      - name: Push Docker image to Docker Hub
+        run: docker push yaz231/options_screener_image:latest
+
+      - name: SSH into server and update Docker container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull yaz231/options_screener_image:latest
+            docker stop options_screener || true
+            docker rm options_screener || true
+            docker run -d -p 8000:8000 --name options_screener yaz231/options_screener_image:latest

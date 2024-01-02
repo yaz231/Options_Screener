@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from models import Option
 from uuid import uuid4
+# from dotenv import load_dotenv
 
 
 templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'templates')
@@ -33,6 +34,9 @@ database = {}
 sessions = {}
 
 templates = Jinja2Templates(directory="templates")
+
+# # Load environment variables from .env file
+# load_dotenv()
 
 class StockRequest(BaseModel):
     symbol: str
@@ -268,6 +272,22 @@ def stock_chart(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("stock_chart.html", {
         "request": request,
         "chart_data": chart_data
+    })
+
+@app.get("/options_builder")
+def options_builder(request: Request, db: Session = Depends(get_db)):
+    session_id = request.state.session_id
+
+    symbols = db.query(Option.symbol).filter(Option.session_id == session_id).distinct().all()
+    symbols = [symbol[0] for symbol in symbols]
+
+    expiration_dates = get_expiration_dates()
+
+    # Render the stock screener template with filtered stocks
+    return templates.TemplateResponse("options_builder.html", {
+        "request": request,
+        "unique_symbols": symbols,
+        "expiration_dates": expiration_dates
     })
 
 @app.on_event("startup")

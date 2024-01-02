@@ -106,14 +106,15 @@ $(document).ready(function() {
         $('.ui.modal').modal('hide');
     });
 
-    // Function to broadcast a message to the server when a stock is added
-    async function broadcast(message) {
-        await socket.send(message);
-    }
 
     $('#stock_chart').click(function() {
         console.log("STOCK CHART")
         window.location.href = '/stock_chart';
+    })
+
+    $('#options_builder').click(function() {
+        console.log("STOCK SCREENER")
+        window.location.href = '/options_builder';
     })
 
     $('#toggleDarkMode').click(function() {
@@ -182,6 +183,7 @@ $(document).ready(function() {
     <button id="add_stocks" class="ui button">Add Stocks</button>
     <button id="delete_all" class="ui button negative">Delete All</button>
     <button id="stock_chart" class="ui button">View Stock Charts</button>
+    <button id="options_builder" class="ui button">View Options Builder</button>
     <button id="toggleDarkMode" class="ui button right">Toggle Dark Mode</button>
 </div>
 

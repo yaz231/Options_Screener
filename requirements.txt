@@ -7,3 +7,4 @@ uvicorn==0.25.0
 yahoo_fin==0.8.9.1
 jinja2==3.1.2
 lxml==4.6.3
+python-dotenv==1.0.0
