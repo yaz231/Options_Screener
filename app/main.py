@@ -13,12 +13,12 @@ import re
 import pandas as pd
 from typing import List
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Request, Depends, BackgroundTasks, Response
+from fastapi import FastAPI, Request, Depends, BackgroundTasks, Response, HTTPException
 from fastapi.templating import Jinja2Templates
 from database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from models import Option
+from models import Option, OptionStrategy
 from uuid import uuid4
 # from dotenv import load_dotenv
 
@@ -41,6 +41,20 @@ templates = Jinja2Templates(directory="templates")
 class StockRequest(BaseModel):
     symbol: str
     date: str
+
+class LegRequest(BaseModel):
+    session_id: str
+    symbol: str
+    current_price: float
+    exp_date: str  # Change this type according to your date representation
+    strike: float
+    type: str
+    premium: float
+    open_interest: int
+    implied_volatility: float
+    leg_type: str
+    leg_strike: float
+    leg_quantity: int
 
 def get_db():
     try:
@@ -290,6 +304,51 @@ def options_builder(request: Request, db: Session = Depends(get_db)):
         "unique_symbols": symbols,
         "expiration_dates": expiration_dates
     })
+
+
+# Create a new endpoint to add a leg to a strategy
+@app.post("/option_strategy/{strategy_id}/add_leg")
+async def add_leg_to_strategy(strategy_id: int, leg_data: LegRequest, db: Session = Depends(get_db)):
+    strategy = db.query(OptionStrategy).filter(OptionStrategy.id == strategy_id).first()
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+
+    # Create a new leg for the strategy
+    new_leg = Option(
+        session_id=leg_data.session_id,
+        symbol=leg_data.symbol,
+        current_price=leg_data.current_price,
+        exp_date=leg_data.exp_date,
+        strike=leg_data.strike,
+        type=leg_data.type,
+        premium=leg_data.premium,
+        open_interest=leg_data.open_interest,
+        implied_volatility=leg_data.implied_volatility,
+        strategy_id=strategy_id,
+        leg_type=leg_data.leg_type,
+        leg_strike=leg_data.leg_strike,
+        leg_quantity=leg_data.leg_quantity
+    )
+    db.add(new_leg)
+    db.commit()
+    db.refresh(new_leg)
+    return new_leg
+
+
+@app.delete("/option_strategy/{strategy_id}/remove_leg/{leg_id}")
+async def remove_leg_from_strategy(strategy_id: int, leg_id: int, db: Session = Depends(get_db)):
+    strategy = db.query(OptionStrategy).filter(OptionStrategy.id == strategy_id).first()
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+
+    leg = db.query(Option).filter(Option.id == leg_id, Option.strategy_id == strategy_id).first()
+    if not leg:
+        raise HTTPException(status_code=404, detail="Leg not found")
+
+    db.delete(leg)
+    db.commit()
+    return {"message": "Leg removed successfully"}
+
 
 @app.on_event("startup")
 async def startup_event():
