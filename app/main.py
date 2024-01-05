@@ -217,13 +217,14 @@ async def create_stock(stock_request: StockRequest, background_tasks: Background
     }
 
 @app.post("/delete_all")
-def delete_all_records(db: Session = Depends(get_db)):
+def delete_all_records(db: Session = Depends(get_db), request: Request = None):
   """
   Deletes all records from the database.
   """
+  session_id = request.state.session_id if request else None
   try:
     # Delete all records from the database using your ORM or database library
-    db.query(Option).delete()
+    db.query(Option).filter(Option.session_id == session_id).delete()
     db.commit()
     return {"code": "success", "message": "All records deleted successfully."}
   except Exception as e:
