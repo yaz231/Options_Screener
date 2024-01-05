@@ -35,6 +35,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             docker pull yaz231/options_screener_image:latest
-            docker stop options_screener || true
-            docker rm options_screener || true
-            docker run -d -p 8000:8000 --name options_screener yaz231/options_screener_image:latest
+            docker stop options_screener_container || true
+            docker rm options_screener_container || true
+            docker run -d --name options_screener_container -p 8000:8000 --name options_screener yaz231/options_screener_image:latest
