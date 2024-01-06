@@ -26,19 +26,20 @@
             {% endfor %}
         </select>
 
-        <!-- Newly added dropdown for strike prices -->
-        <label for="strikePrices">Select Strike Price:</label>
-        <select id="strikePrices"></select>
-
         <!-- Container to add and remove legs -->
         <div id="legsContainer">
             <div class="leg">
                 <label>Select Leg Type:</label>
                 <select class="legType">
-                    <option value="Put">Buy Put</option>
-                    <option value="Call">Buy Call</option>
+                    <option value="Buy_Put">Buy Put</option>
+                    <option value="Buy_Call">Buy Call</option>
+                    <option value="Sell_Put">Sell Put</option>
+                    <option value="Buy_Put">Buy Put</option>
                     <!-- Add other options for the leg type -->
                 </select>
+                <!-- Newly added dropdown for strike prices -->
+                <label for="strikePrices">Select Strike Price:</label>
+                <select id="strikePrices"></select>
                 <button type="button" onclick="removeLeg(this)">Remove Leg</button>
             </div>
         </div>
@@ -55,16 +56,14 @@
     </div>
 
     <script>
-        document.getElementById('symbol').addEventListener('change', function() {
-            const selectedSymbol = this.value;
-
+        // Function to fetch and populate strike prices for a specific leg
+        function fetchAndPopulateStrikePrices(selectedSymbol) {
             fetch(`/get_strike_prices?symbol=${selectedSymbol}`)
                 .then(response => response.json())
                 .then(data => {
                     const strikePricesDropdown = document.getElementById('strikePrices');
                     strikePricesDropdown.innerHTML = '';
 
-                    // Populate the strike prices dropdown with fetched data
                     data.strikePrices.forEach(strikePrice => {
                         const option = document.createElement('option');
                         option.value = strikePrice;
@@ -75,6 +74,12 @@
                 .catch(error => {
                     console.error('Error fetching strike prices:', error);
                 });
+        }
+
+        document.getElementById('symbol').addEventListener('change', function () {
+            const selectedSymbol = this.value;
+
+            fetchAndPopulateStrikePrices(selectedSymbol);
         });
         function addLeg() {
             const legsContainer = document.getElementById('legsContainer');
@@ -90,10 +95,18 @@
 
                         <!-- Add other options for the leg type -->
                     </select>
+                    <label for="strikePrices">Select Strike Price:</label>
+                    <select class="legstrikePrices"></select>
                     <button type="button" onclick="removeLeg(this)">Remove Leg</button>
                 </div>
             `;
             legsContainer.appendChild(newLeg);
+
+            // Fetch and populate the strike prices dropdown for the newly added leg
+            const legStrikePriceDropdown = newLeg.querySelector('.legStrikePrice');
+            const selectedSymbol = document.getElementById('symbol').value;
+
+            fetchAndPopulateStrikePrices(selectedSymbol, legStrikePriceDropdown);
         }
 
         function removeLeg(button) {
@@ -106,45 +119,48 @@
             const legs = document.querySelectorAll('.leg');
             const legData = [];
 
+            // For each leg:
             legs.forEach((leg, index) => {
+                console.log("LEG: " + leg)
+                console.log("INDEX: " + index)
                 const legType = leg.querySelector('.legType').value;
-                // Here, fetch other necessary data for the legs (e.g., strike price, quantity, etc.)
-                // Replace the below example data with actual data for each leg
-                const legDataPoint = [50 + index * 10, 60 + index * 10, 70 + index * 10];
+                // const strikePrice = // Get the strike price for the leg
+                // const premiumPaid = // Get the premium paid for the leg
+
+                const legDataPoints = [];
+                for (let stockPrice = 0; stockPrice <= 100; stockPrice += 1) {
+                    let profitLoss = 0;
+                    if (legType === 'Buy_Call') {
+                        profitLoss = Math.max(0, (stockPrice - strikePrice) - premiumPaid);
+                    } else if (legType === 'Buy_Put') {
+                        profitLoss = Math.max(0, (strikePrice - stockPrice) - premiumPaid);
+                    } else if (legType === 'Sell_Call') {
+                        profitLoss = Math.max(0, premiumPaid - (stockPrice - strikePrice));
+                    } else if (legType === 'Sell_Put') {
+                        profitLoss = Math.max(0, premiumPaid - (strikePrice - stockPrice));
+                    }
+                    legDataPoints.push(profitLoss);
+                }
+
                 legData.push({
                     label: `Leg ${index + 1} (${legType})`,
-                    backgroundColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.2)`,
-                    borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
-                    borderWidth: 1,
-                    data: legDataPoint,
+                    data: legDataPoints,
+                    // Other dataset properties like colors, etc.
                 });
             });
 
             // Prepare chart data using leg data points
             const chartData = {
-                labels: ["Price 1", "Price 2", "Price 3"], // Add appropriate labels for price points
+                labels: Array.from({ length: 101 }, (_, i) => i), // Stock price labels from 0 to 100
                 datasets: legData,
             };
 
             // Chart.js configuration
             const chartOptions = {
-                responsive: true,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Price'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Profit/Loss'
-                        }
-                    }
-                }
+                // Chart configuration options
             };
 
+            // Create and render the chart
             const ctx = document.getElementById('myChart').getContext('2d');
             const myChart = new Chart(ctx, {
                 type: 'line',
