@@ -5,6 +5,7 @@
     <title>Multi-leg Option Contract Graph</title>
     <!-- Include Chart.js library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
 </head>
 <body>
     <h1>Multi-leg Option Contract Graph</h1>
@@ -24,6 +25,10 @@
             <option value="{{ expiration_date }}">{{ expiration_date }}</option>
             {% endfor %}
         </select>
+
+        <!-- Newly added dropdown for strike prices -->
+        <label for="strikePrices">Select Strike Price:</label>
+        <select id="strikePrices"></select>
 
         <!-- Container to add and remove legs -->
         <div id="legsContainer">
@@ -50,6 +55,27 @@
     </div>
 
     <script>
+        document.getElementById('symbol').addEventListener('change', function() {
+            const selectedSymbol = this.value;
+
+            fetch(`/get_strike_prices?symbol=${selectedSymbol}`)
+                .then(response => response.json())
+                .then(data => {
+                    const strikePricesDropdown = document.getElementById('strikePrices');
+                    strikePricesDropdown.innerHTML = '';
+
+                    // Populate the strike prices dropdown with fetched data
+                    data.strikePrices.forEach(strikePrice => {
+                        const option = document.createElement('option');
+                        option.value = strikePrice;
+                        option.text = strikePrice;
+                        strikePricesDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching strike prices:', error);
+                });
+        });
         function addLeg() {
             const legsContainer = document.getElementById('legsContainer');
             const newLeg = document.createElement('div');
@@ -57,8 +83,11 @@
                 <div class="leg">
                     <label>Select Leg Type:</label>
                     <select class="legType">
-                        <option value="Put">Buy Put</option>
-                        <option value="Call">Buy Call</option>
+                        <option value="Buy_Put">Buy Put</option>
+                        <option value="Sell_Put">Sell Put</option>
+                        <option value="Buy_Call">Buy Call</option>
+                        <option value="Sell_Call">Sell Call</option>
+
                         <!-- Add other options for the leg type -->
                     </select>
                     <button type="button" onclick="removeLeg(this)">Remove Leg</button>

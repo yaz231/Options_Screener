@@ -250,6 +250,12 @@ def get_start_date():
     current_date = datetime.now().date()
     return current_date - timedelta(days=365)
 
+@app.get("/get_strike_prices")
+async def get_strike_prices(symbol: str, request: Request, db: Session = Depends(get_db)):
+    session_id = request.state.session_id
+    strike_prices = db.query(Option.strike).filter(Option.session_id == session_id, Option.symbol == symbol).distinct().all()
+    return {"strikePrices": strike_prices}
+
 def create_stock_chart(data, symbol, timeframe):
     fig = go.Figure(data=[go.Candlestick(x=data.index,
                                           open=data['open'],
