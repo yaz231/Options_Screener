@@ -110,6 +110,13 @@
 
             fetchAndPopulateStrikePrices(selectedSymbol, legStrikePriceDropdown);
         }
+        // Fetch and populate strike prices for the initial leg when the page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            const initialLegStrikePriceDropdown = document.querySelector('.legStrikePrice');
+            const selectedSymbol = document.getElementById('symbol').value;
+
+            fetchAndPopulateStrikePrices(selectedSymbol, initialLegStrikePriceDropdown);
+        });
 
         function removeLeg(button) {
             const legDiv = button.parentElement;
