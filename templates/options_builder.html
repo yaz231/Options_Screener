@@ -28,20 +28,20 @@
 
         <!-- Container to add and remove legs -->
         <div id="legsContainer">
-            <div class="leg">
-                <label>Select Leg Type:</label>
-                <select class="legType">
-                    <option value="Buy_Put">Buy Put</option>
-                    <option value="Buy_Call">Buy Call</option>
-                    <option value="Sell_Put">Sell Put</option>
-                    <option value="Sell_Call">Sell Call</option>
-                    <!-- Add other options for the leg type -->
-                </select>
-                <!-- Newly added dropdown for strike prices -->
-                <label for="strikePrices">Select Strike Price:</label>
-                <select id="strikePrices"></select>
-                <button type="button" onclick="removeLeg(this)">Remove Leg</button>
-            </div>
+<!--            <div class="leg">-->
+<!--                <label>Select Leg Type:</label>-->
+<!--                <select class="legType">-->
+<!--                    <option value="Buy_Put">Buy Put</option>-->
+<!--                    <option value="Buy_Call">Buy Call</option>-->
+<!--                    <option value="Sell_Put">Sell Put</option>-->
+<!--                    <option value="Sell_Call">Sell Call</option>-->
+<!--                    &lt;!&ndash; Add other options for the leg type &ndash;&gt;-->
+<!--                </select>-->
+<!--                &lt;!&ndash; Newly added dropdown for strike prices &ndash;&gt;-->
+<!--                <label for="strikePrices">Select Strike Price:</label>-->
+<!--                <select id="strikePrices"></select>-->
+<!--                <button type="button" onclick="removeLeg(this)">Remove Leg</button>-->
+<!--            </div>-->
         </div>
 
         <!-- Button to add a new leg -->
@@ -66,7 +66,7 @@
                     data.strikePrices.forEach(strikePrice => {
                         const option = document.createElement('option');
                         option.value = strikePrice;
-                        option.text = strikePrice;
+                        option.text = `Strike Price: ${strikePrice} - Premium: ${data.strikePremiums[index]}`; // Show strike price with premium
                         strikePricesDropdown.appendChild(option);
                     });
                 })
@@ -123,45 +123,53 @@
             legDiv.parentElement.removeChild(legDiv);
         }
 
-        function generateChart() {
+        async function generateChart() {
             const expirationDate = document.getElementById('expirationDate').value;
             const legs = document.querySelectorAll('.leg');
+
+            const selectedSymbol = document.getElementById('symbol').value;
+            const currentStockPrice = await fetchCurrentStockPrice(selectedSymbol);
+
+            // Calculate the range for the x-axis based on the current stock price, strike price, and some additional data
+            const minStockPrice = currentStockPrice - 20; // 20 below the current stock price
+            const maxStockPrice = currentStockPrice + 20; // 20 above the current stock price
+
             const chartData = {
-                labels: Array.from({ length: 101 }, (_, i) => i), // Stock price labels from 0 to 100
+                labels: Array.from({ length: maxStockPrice - minStockPrice + 1 }, (_, i) => minStockPrice + i), // Stock price labels from minStockPrice to maxStockPrice
                 datasets: [],
             };
 
-            // Iterate through stock prices
-            for (let stockPrice = 0; stockPrice <= 100; stockPrice += 1) {
-                let combinedProfitLoss = 0;
+            // Iterate through each leg
+            legs.forEach((leg, index) => {
+                const legType = leg.querySelector('.legType').value;
+                const selectedOption = leg.querySelector('.legStrikePrice').selectedOptions[0].text; // Get the selected option
+                const [strikePrice, premium] = selectedOption.split(' - Premium: ')[0].split(': ')[1].split(' '); // Parse strike price and premium
 
-                // Calculate combined profit/loss for all legs at the current stock price
-                legs.forEach((leg, index) => {
-                    const legType = leg.querySelector('.legType').value;
-                    const strikePrice = leg.querySelector('.legStrikePrice').value; // Get the selected strike price
-                    const premiumPaid = 10; // Replace with actual premium for the leg
+                const legDataPoints = [];
 
+                // Calculate profit/loss for each stock price in the range
+                for (let stockPrice = minStockPrice; stockPrice <= maxStockPrice; stockPrice += 1) {
                     let legProfitLoss = 0;
 
                     if (legType === 'Buy_Call') {
-                        legProfitLoss = Math.max(0, (stockPrice - strikePrice) - premiumPaid);
+                        legProfitLoss = Math.max(0, (stockPrice - Number(strikePrice)) - Number(premium));
                     } else if (legType === 'Buy_Put') {
-                        legProfitLoss = Math.max(0, (strikePrice - stockPrice) - premiumPaid);
+                        legProfitLoss = Math.max(0, (Number(strikePrice) - stockPrice) - Number(premium));
                     } else if (legType === 'Sell_Call') {
-                        legProfitLoss = Math.max(0, premiumPaid - (stockPrice - strikePrice));
+                        legProfitLoss = Math.max(0, Number(premium) - (stockPrice - Number(strikePrice)));
                     } else if (legType === 'Sell_Put') {
-                        legProfitLoss = Math.max(0, premiumPaid - (strikePrice - stockPrice));
+                        legProfitLoss = Math.max(0, Number(premium) - (Number(strikePrice) - stockPrice));
                     }
 
-                    combinedProfitLoss += legProfitLoss; // Accumulate profit/loss for each leg
-                });
+                    legDataPoints.push(legProfitLoss); // Push profit/loss for each stock price
+                }
 
                 chartData.datasets.push({
-                    label: `Stock Price ${stockPrice}`,
-                    data: combinedProfitLoss, // Accumulated profit/loss for the current stock price
+                    label: `Leg ${index + 1} (${legType})`,
+                    data: legDataPoints,
                     // Other dataset properties like colors, etc.
                 });
-            }
+            });
 
             // Chart.js configuration
             const chartOptions = {
@@ -180,6 +188,13 @@
         function goToOptions() {
             console.log("OPTIONS PAGE")
             window.location.href = '/';
+        }
+
+        // Function to fetch the current stock price from the backend or an API
+        async function fetchCurrentStockPrice(selectedSymbol) {
+            const response = await fetch(`/get_current_stock_price?symbol=${selectedSymbol}`);
+            const data = await response.json();
+            return data.currentStockPrice;
         }
     </script>
 </body>

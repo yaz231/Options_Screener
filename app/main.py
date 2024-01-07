@@ -254,7 +254,21 @@ def get_start_date():
 async def get_strike_prices(symbol: str, request: Request, db: Session = Depends(get_db)):
     session_id = request.state.session_id
     strike_prices = db.query(Option.strike).filter(Option.session_id == session_id, Option.symbol == symbol).distinct().all()
-    return {"strikePrices": [price[0] for price in strike_prices]}
+    strike_premiums = db.query(Option.premium).filter(Option.session_id == session_id, Option.symbol == symbol).distinct().all()
+
+    return {"strikePrices": [price[0] for price in strike_prices],
+            "strikePremiums": [premium[0] for premium in strike_premiums]}
+
+@app.get("/get_current_stock_price")
+async def get_current_stock_price(symbol: str, request: Request, db: Session = Depends(get_db)):
+    session_id = request.state.session_id
+    current_price = db.query(Option.current_price).filter(Option.session_id == session_id, Option.symbol == symbol).first()
+
+    # Ensure current_price is a valid numerical value or handle accordingly
+    if current_price:
+        return {"currentStockPrice": current_price[0]}
+    else:
+        return {"currentStockPrice": 0}  # Return a default value or handle the absence of a price
 
 def create_stock_chart(data, symbol, timeframe):
     fig = go.Figure(data=[go.Candlestick(x=data.index,
