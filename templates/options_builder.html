@@ -57,11 +57,10 @@
 
     <script>
         // Function to fetch and populate strike prices for a specific leg
-        function fetchAndPopulateStrikePrices(selectedSymbol) {
+        function fetchAndPopulateStrikePrices(selectedSymbol, strikePricesDropdown) {
             fetch(`/get_strike_prices?symbol=${selectedSymbol}`)
                 .then(response => response.json())
                 .then(data => {
-                    const strikePricesDropdown = document.getElementById('strikePrices');
                     strikePricesDropdown.innerHTML = '';
 
                     data.strikePrices.forEach(strikePrice => {
@@ -78,9 +77,13 @@
 
         document.getElementById('symbol').addEventListener('change', function () {
             const selectedSymbol = this.value;
+            const allLegStrikePriceDropdowns = document.querySelectorAll('.legStrikePrice');
 
-            fetchAndPopulateStrikePrices(selectedSymbol);
+            allLegStrikePriceDropdowns.forEach(strikePricesDropdown => {
+                fetchAndPopulateStrikePrices(selectedSymbol, strikePricesDropdown);
+            });
         });
+
         function addLeg() {
             const legsContainer = document.getElementById('legsContainer');
             const newLeg = document.createElement('div');
@@ -92,11 +95,10 @@
                         <option value="Sell_Put">Sell Put</option>
                         <option value="Buy_Call">Buy Call</option>
                         <option value="Sell_Call">Sell Call</option>
-
                         <!-- Add other options for the leg type -->
                     </select>
                     <label for="strikePrices">Select Strike Price:</label>
-                    <select class="legstrikePrices"></select>
+                    <select class="legStrikePrice"></select>
                     <button type="button" onclick="removeLeg(this)">Remove Leg</button>
                 </div>
             `;
