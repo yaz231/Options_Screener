@@ -34,7 +34,7 @@
                     <option value="Buy_Put">Buy Put</option>
                     <option value="Buy_Call">Buy Call</option>
                     <option value="Sell_Put">Sell Put</option>
-                    <option value="Buy_Put">Buy Put</option>
+                    <option value="Sell_Call">Sell Call</option>
                     <!-- Add other options for the leg type -->
                 </select>
                 <!-- Newly added dropdown for strike prices -->
@@ -126,43 +126,42 @@
         function generateChart() {
             const expirationDate = document.getElementById('expirationDate').value;
             const legs = document.querySelectorAll('.leg');
-            const legData = [];
-
-            // For each leg:
-            legs.forEach((leg, index) => {
-                console.log("LEG: " + leg)
-                console.log("INDEX: " + index)
-                const legType = leg.querySelector('.legType').value;
-                // const strikePrice = // Get the strike price for the leg
-                // const premiumPaid = // Get the premium paid for the leg
-
-                const legDataPoints = [];
-                for (let stockPrice = 0; stockPrice <= 100; stockPrice += 1) {
-                    let profitLoss = 0;
-                    if (legType === 'Buy_Call') {
-                        profitLoss = Math.max(0, (stockPrice - strikePrice) - premiumPaid);
-                    } else if (legType === 'Buy_Put') {
-                        profitLoss = Math.max(0, (strikePrice - stockPrice) - premiumPaid);
-                    } else if (legType === 'Sell_Call') {
-                        profitLoss = Math.max(0, premiumPaid - (stockPrice - strikePrice));
-                    } else if (legType === 'Sell_Put') {
-                        profitLoss = Math.max(0, premiumPaid - (strikePrice - stockPrice));
-                    }
-                    legDataPoints.push(profitLoss);
-                }
-
-                legData.push({
-                    label: `Leg ${index + 1} (${legType})`,
-                    data: legDataPoints,
-                    // Other dataset properties like colors, etc.
-                });
-            });
-
-            // Prepare chart data using leg data points
             const chartData = {
                 labels: Array.from({ length: 101 }, (_, i) => i), // Stock price labels from 0 to 100
-                datasets: legData,
+                datasets: [],
             };
+
+            // Iterate through stock prices
+            for (let stockPrice = 0; stockPrice <= 100; stockPrice += 1) {
+                let combinedProfitLoss = 0;
+
+                // Calculate combined profit/loss for all legs at the current stock price
+                legs.forEach((leg, index) => {
+                    const legType = leg.querySelector('.legType').value;
+                    const strikePrice = leg.querySelector('.legStrikePrice').value; // Get the selected strike price
+                    const premiumPaid = 10; // Replace with actual premium for the leg
+
+                    let legProfitLoss = 0;
+
+                    if (legType === 'Buy_Call') {
+                        legProfitLoss = Math.max(0, (stockPrice - strikePrice) - premiumPaid);
+                    } else if (legType === 'Buy_Put') {
+                        legProfitLoss = Math.max(0, (strikePrice - stockPrice) - premiumPaid);
+                    } else if (legType === 'Sell_Call') {
+                        legProfitLoss = Math.max(0, premiumPaid - (stockPrice - strikePrice));
+                    } else if (legType === 'Sell_Put') {
+                        legProfitLoss = Math.max(0, premiumPaid - (strikePrice - stockPrice));
+                    }
+
+                    combinedProfitLoss += legProfitLoss; // Accumulate profit/loss for each leg
+                });
+
+                chartData.datasets.push({
+                    label: `Stock Price ${stockPrice}`,
+                    data: combinedProfitLoss, // Accumulated profit/loss for the current stock price
+                    // Other dataset properties like colors, etc.
+                });
+            }
 
             // Chart.js configuration
             const chartOptions = {
@@ -174,7 +173,7 @@
             const myChart = new Chart(ctx, {
                 type: 'line',
                 data: chartData,
-                options: chartOptions
+                options: chartOptions,
             });
         }
 
