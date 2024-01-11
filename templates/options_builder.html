@@ -26,24 +26,6 @@
             {% endfor %}
         </select>
 
-        <!-- Container to add and remove legs -->
-        <div id="legsContainer">
-            <div class="leg">
-                <label>Select Leg Type:</label>
-                <select class="legType">
-                    <option value="Buy_Put">Buy Put</option>
-                    <option value="Buy_Call">Buy Call</option>
-                    <option value="Sell_Put">Sell Put</option>
-                    <option value="Sell_Call">Sell Call</option>
-                    <!-- Add other options for the leg type -->
-                </select>
-                <!-- Newly added dropdown for strike prices -->
-                <label for="strikePrices">Select Strike Price:</label>
-                <select id="strikePrices"></select>
-                <button type="button" onclick="removeLeg(this)">Remove Leg</button>
-            </div>
-        </div>
-
         <!-- Button to add a new leg -->
         <button type="button" onclick="addLeg()">Add Leg</button>
         <button type="button" onclick="generateChart()">Generate Chart</button>
@@ -56,18 +38,45 @@
     </div>
 
     <script>
-        // Function to fetch and populate strike prices for a specific leg
-        function fetchAndPopulateStrikePrices(selectedSymbol, strikePricesDropdown) {
+        function addLeg() {
+            const optionForm = document.getElementById('optionForm');
+            const selectedSymbol = document.getElementById('symbol').value;
+
+            // Fetch strike prices for the selected symbol
             fetch(`/get_strike_prices?symbol=${selectedSymbol}`)
                 .then(response => response.json())
                 .then(data => {
-                    strikePricesDropdown.innerHTML = '';
+                    // Create and append the legsContainer div
+                    const legsContainer = document.createElement('div');
+                    legsContainer.id = 'legsContainer'; // Assign ID to the container
+                    optionForm.appendChild(legsContainer);
 
-                    data.strikePrices.forEach(strikePrice => {
+                    const newLeg = document.createElement('div');
+                    newLeg.classList.add('leg');
+                    newLeg.innerHTML = `
+                        <label>Select Leg Type:</label>
+                        <select class="legType">
+                            <option value="Buy_Put">Buy Put</option>
+                            <option value="Sell_Put">Sell Put</option>
+                            <option value="Buy_Call">Buy Call</option>
+                            <option value="Sell_Call">Sell Call</option>
+                            <!-- Add other options for the leg type -->
+                        </select>
+                        <!-- Newly added dropdown for strike prices -->
+                        <label for="strikePrices">Select Strike Price:</label>
+                        <select class="legStrikePrice"></select>
+                        <button type="button" onclick="removeLeg(this)">Remove Leg</button>
+                    `;
+                    legsContainer.appendChild(newLeg);
+
+                    // Populate the strike prices dropdown for the newly added leg
+                    const legStrikePriceDropdown = newLeg.querySelector('.legStrikePrice');
+
+                    data.strikePrices.forEach((strikePrice, index) => {
                         const option = document.createElement('option');
                         option.value = strikePrice;
-                        option.text = `Strike Price: ${strikePrice} - Premium: ${data.strikePremiums[index]}`; // Show strike price with premium
-                        strikePricesDropdown.appendChild(option);
+                        option.text = `Strike Price: ${strikePrice} - Premium: ${data.strikePremiums[index]}`;
+                        legStrikePriceDropdown.appendChild(option);
                     });
                 })
                 .catch(error => {
@@ -75,48 +84,6 @@
                 });
         }
 
-        document.getElementById('symbol').addEventListener('change', function () {
-            const selectedSymbol = this.value;
-            const allLegStrikePriceDropdowns = document.querySelectorAll('.legStrikePrice');
-
-            allLegStrikePriceDropdowns.forEach(strikePricesDropdown => {
-                fetchAndPopulateStrikePrices(selectedSymbol, strikePricesDropdown);
-            });
-        });
-
-        function addLeg() {
-            const legsContainer = document.getElementById('legsContainer');
-            const newLeg = document.createElement('div');
-            newLeg.innerHTML = `
-                <div class="leg">
-                    <label>Select Leg Type:</label>
-                    <select class="legType">
-                        <option value="Buy_Put">Buy Put</option>
-                        <option value="Sell_Put">Sell Put</option>
-                        <option value="Buy_Call">Buy Call</option>
-                        <option value="Sell_Call">Sell Call</option>
-                        <!-- Add other options for the leg type -->
-                    </select>
-                    <label for="strikePrices">Select Strike Price:</label>
-                    <select class="legStrikePrice"></select>
-                    <button type="button" onclick="removeLeg(this)">Remove Leg</button>
-                </div>
-            `;
-            legsContainer.appendChild(newLeg);
-
-            // Fetch and populate the strike prices dropdown for the newly added leg
-            const legStrikePriceDropdown = newLeg.querySelector('.legStrikePrice');
-            const selectedSymbol = document.getElementById('symbol').value;
-
-            fetchAndPopulateStrikePrices(selectedSymbol, legStrikePriceDropdown);
-        }
-        // Fetch and populate strike prices for the initial leg when the page loads
-        document.addEventListener('DOMContentLoaded', function () {
-            const initialLegStrikePriceDropdown = document.querySelector('.legStrikePrice');
-            const selectedSymbol = document.getElementById('symbol').value;
-
-            fetchAndPopulateStrikePrices(selectedSymbol, initialLegStrikePriceDropdown);
-        });
 
         function removeLeg(button) {
             const legDiv = button.parentElement;
@@ -129,8 +96,9 @@
 
             const selectedSymbol = document.getElementById('symbol').value;
             const currentStockPrice = await fetchCurrentStockPrice(selectedSymbol);
+            console.log(currentStockPrice)
 
-            // Calculate the range for the x-axis based on the current stock price, strike price, and some additional data
+            // Calculate the range for the x-axis based on the current stock price
             const minStockPrice = currentStockPrice - 20; // 20 below the current stock price
             const maxStockPrice = currentStockPrice + 20; // 20 above the current stock price
 
@@ -139,42 +107,98 @@
                 datasets: [],
             };
 
-            // Iterate through each leg
+            let totalProfitLoss = Array(maxStockPrice - minStockPrice + 1).fill(0); // Initialize an array to store total profit/loss
+
             legs.forEach((leg, index) => {
                 const legType = leg.querySelector('.legType').value;
-                const selectedOption = leg.querySelector('.legStrikePrice').selectedOptions[0].text; // Get the selected option
-                const [strikePrice, premium] = selectedOption.split(' - Premium: ')[0].split(': ')[1].split(' '); // Parse strike price and premium
 
-                const legDataPoints = [];
+                const selectedOption = leg.querySelector('.legStrikePrice').selectedOptions[0].text; // Get the selected option
+                const { strikePrice, premium } = extractNumbersFromText(selectedOption);
 
                 // Calculate profit/loss for each stock price in the range
                 for (let stockPrice = minStockPrice; stockPrice <= maxStockPrice; stockPrice += 1) {
                     let legProfitLoss = 0;
 
                     if (legType === 'Buy_Call') {
-                        legProfitLoss = Math.max(0, (stockPrice - Number(strikePrice)) - Number(premium));
+                        // Calculate profit/loss for Buy Call option
+                        if (stockPrice <= Number(strikePrice)) {
+                            legProfitLoss = -premium; // Zone where the option would expire worthless
+                        } else if (stockPrice > Number(strikePrice) && stockPrice <= Number(strikePrice) + Number(premium)) {
+                            legProfitLoss = stockPrice - Number(strikePrice) - premium; // Zone where the option has value but not enough
+                        } else {
+                            legProfitLoss = stockPrice - Number(strikePrice); // Zone where the option value exceeds premium paid
+                        }
                     } else if (legType === 'Buy_Put') {
-                        legProfitLoss = Math.max(0, (Number(strikePrice) - stockPrice) - Number(premium));
-                    } else if (legType === 'Sell_Call') {
-                        legProfitLoss = Math.max(0, Number(premium) - (stockPrice - Number(strikePrice)));
-                    } else if (legType === 'Sell_Put') {
-                        legProfitLoss = Math.max(0, Number(premium) - (Number(strikePrice) - stockPrice));
+                        if (stockPrice >= Number(strikePrice)) {
+                            legProfitLoss = -premium; // Zone where the option would expire worthless
+                        } else if (stockPrice < Number(strikePrice) && stockPrice >= Number(strikePrice) - Number(premium)) {
+                            legProfitLoss = Number(premium) - (Number(strikePrice) - stockPrice); // Zone where the option has value but not enough
+                        } else {
+                            legProfitLoss = stockPrice - Number(strikePrice); // Zone where the option value exceeds premium paid
+                        }
                     }
 
-                    legDataPoints.push(legProfitLoss); // Push profit/loss for each stock price
-                }
+                    // Draw a vertical line at the strike price of the leg
+                    if (stockPrice === Number(strikePrice)) {
+                        chartOptions.plugins.verticalLine.x = currentStockIndex; // Replace with the appropriate index of the strikePrice
+                        chartOptions.plugins.verticalLine.label.content = `Strike Price: ${strikePrice}`;
+                    }
 
-                chartData.datasets.push({
-                    label: `Leg ${index + 1} (${legType})`,
-                    data: legDataPoints,
-                    // Other dataset properties like colors, etc.
-                });
+                    totalProfitLoss[stockPrice - minStockPrice] += legProfitLoss; // Add leg's profit/loss to the total array
+                }
             });
+
+            // Calculate the profit/loss for the current stock price
+            const currentStockIndex = currentStockPrice - minStockPrice;
+            const currentStockProfitLoss = totalProfitLoss[currentStockIndex];
 
             // Chart.js configuration
             const chartOptions = {
                 // Chart configuration options
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: `Price of ${selectedSymbol} by ${expirationDate}`,
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value.toFixed(0); // Display rounded whole numbers on the x-axis
+                            },
+                        },
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Premium ($)',
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return `$${(value * 100).toFixed(2)}`; // Display premium multiplied by 100 with $ sign
+                            },
+                        },
+                    },
+                }
+                // plugins: {
+                //     verticalLine: {
+                //         x: currentStockIndex, // Draw the vertical line at the current stock price
+                //         borderColor: 'red',
+                //         borderWidth: 1,
+                //         borderDash: [5, 5],
+                //         label: {
+                //             enabled: true,
+                //             content: `Current Stock Price: ${currentStockPrice.toFixed(2)} Profit/Loss: ${currentStockProfitLoss.toFixed(2)}`,
+                //             position: 'top',
+                //         },
+                //     },
+                // },
             };
+
+            chartData.datasets.push({
+                label: `Combined Legs`,
+                data: totalProfitLoss,
+                // Other dataset properties like colors, etc.
+            });
 
             // Create and render the chart
             const ctx = document.getElementById('myChart').getContext('2d');
@@ -196,6 +220,19 @@
             const data = await response.json();
             return data.currentStockPrice;
         }
+
+        function extractNumbersFromText(text) {
+            const regex = /Strike Price: (\d+(?:\.\d+)?) - Premium: (\d+(?:\.\d+)?)/;
+            const match = text.match(regex);
+
+            if (match && match.length === 3) {
+                const strikePrice = parseFloat(match[1]); // Extracted strike price as a number
+                const premium = parseFloat(match[2]); // Extracted premium as a number
+                return { strikePrice, premium };
+            } else {
+                return { strikePrice: NaN, premium: NaN }; // Invalid format or no match found
+            }
+}
     </script>
 </body>
 </html>

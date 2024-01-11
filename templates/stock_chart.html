@@ -47,6 +47,7 @@
             <option value="360" selected>1 Year</option>
         </select>
         <button id="options_button" onclick="goToOptions()" class="ui button">View Options Table</button>
+        <button id="options_builder_button" onclick="goToOptionsBuilder()" class="ui button">View Options Builder</button>
         <button onclick="toggleDarkMode()" class="ui button right">Toggle Dark Mode</button>
 
     </div>
@@ -166,6 +167,11 @@
         function goToOptions() {
             console.log("OPTIONS PAGE")
             window.location.href = '/';
+        }
+
+         function goToOptionsBuilder() {
+            console.log("OPTIONS BUILDER PAGE")
+            window.location.href = '/options_builder';
         }
         // Load data from localStorage
         function loadData() {
