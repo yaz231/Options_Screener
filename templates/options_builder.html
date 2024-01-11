@@ -102,6 +102,48 @@
             const minStockPrice = currentStockPrice - 20; // 20 below the current stock price
             const maxStockPrice = currentStockPrice + 20; // 20 above the current stock price
 
+            // Chart.js configuration
+            const chartOptions = {
+                // Chart configuration options
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: `Price of ${selectedSymbol} by ${expirationDate}`,
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value.toFixed(0); // Display rounded whole numbers on the x-axis
+                            },
+                        },
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Premium ($)',
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return `$${(value * 100).toFixed(2)}`; // Display premium multiplied by 100 with $ sign
+                            },
+                        },
+                    },
+                }
+                // plugins: {
+                //     verticalLine: {
+                //         x: currentStockIndex, // Draw the vertical line at the current stock price
+                //         borderColor: 'red',
+                //         borderWidth: 1,
+                //         borderDash: [5, 5],
+                //         label: {
+                //             enabled: true,
+                //             content: `Current Stock Price: ${currentStockPrice.toFixed(2)} Profit/Loss: ${currentStockProfitLoss.toFixed(2)}`,
+                //             position: 'top',
+                //         },
+                //     },
+                // },
+            };
+
             const chartData = {
                 labels: Array.from({ length: maxStockPrice - minStockPrice + 1 }, (_, i) => minStockPrice + i), // Stock price labels from minStockPrice to maxStockPrice
                 datasets: [],
@@ -151,48 +193,6 @@
             // Calculate the profit/loss for the current stock price
             const currentStockIndex = currentStockPrice - minStockPrice;
             const currentStockProfitLoss = totalProfitLoss[currentStockIndex];
-
-            // Chart.js configuration
-            const chartOptions = {
-                // Chart configuration options
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: `Price of ${selectedSymbol} by ${expirationDate}`,
-                        },
-                        ticks: {
-                            callback: function (value, index, values) {
-                                return value.toFixed(0); // Display rounded whole numbers on the x-axis
-                            },
-                        },
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Premium ($)',
-                        },
-                        ticks: {
-                            callback: function (value, index, values) {
-                                return `$${(value * 100).toFixed(2)}`; // Display premium multiplied by 100 with $ sign
-                            },
-                        },
-                    },
-                }
-                // plugins: {
-                //     verticalLine: {
-                //         x: currentStockIndex, // Draw the vertical line at the current stock price
-                //         borderColor: 'red',
-                //         borderWidth: 1,
-                //         borderDash: [5, 5],
-                //         label: {
-                //             enabled: true,
-                //             content: `Current Stock Price: ${currentStockPrice.toFixed(2)} Profit/Loss: ${currentStockProfitLoss.toFixed(2)}`,
-                //             position: 'top',
-                //         },
-                //     },
-                // },
-            };
 
             chartData.datasets.push({
                 label: `Combined Legs`,
