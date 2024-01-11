@@ -3,6 +3,9 @@
 Option Screener is a web application that allows users to filter and view options data for stocks based on various criteria.
 It also allows you to view and compare different stocks all on the same screen.
 
+Currently this project is incorporated with GitActions. Any Github Push I make will automatically update the live site.
+
+
 Disclaimer: This project is mostly used to explore different concepts when developing a web application. This project is still under development and will undergo changes but for now I like where it is. 
 ## Installation
 
